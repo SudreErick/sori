@@ -2,9 +2,16 @@ spring:
   application:
     name: api-psicosocial
 
+  # O Railway injeta o valor da porta na variável 'PORT'
+  server:
+    port: ${PORT:8080}
+
   data:
     mongodb:
-      uri: mongodb://sori:soripass3939@localhost:27017/db_psicosocial_v2?authSource=admin&socketTimeoutMS=90000&connectTimeoutMS=90000
+      # Use ${MONGO_URL} se você usar o Add-on do MongoDB do Railway.
+      # Se usar o MongoDB Atlas, você precisará adicionar uma variável 'MONGO_URL' (ou similar)
+      # no painel do Railway e colocar a URI do Atlas lá.
+      uri: ${MONGO_URL}
 
 springdoc:
   api-docs:
@@ -15,4 +22,6 @@ springdoc:
     tagsSorter: alpha
 
 jwt:
-  secret: aMinhaChaveSecretaParaOProjetoDaSoriComPeloMenos32Caracteres
+  # O segredo JWT DEVE ser injetado por uma variável de ambiente no Railway
+  # para máxima segurança, mas mantemos o valor de fallback para desenvolvimento local.
+  secret: ${JWT_SECRET:aMinhaChaveSecretaParaOProjetoDaSoriComPeloMenos32Caracteres}
