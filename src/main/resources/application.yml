@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: api-psicosocial
+
+  data:
+    mongodb:
+      uri: mongodb://sori:soripass3939@localhost:27017/db_psicosocial_v2?authSource=admin&socketTimeoutMS=90000&connectTimeoutMS=90000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+
+jwt:
+  secret: aMinhaChaveSecretaParaOProjetoDaSoriComPeloMenos32Caracteres

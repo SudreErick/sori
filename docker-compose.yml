@@ -1,0 +1,15 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  mongodb:
+    container_name: mongodb_psicosocial_v2
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: sori
+      MONGO_INITDB_ROOT_PASSWORD: soripass3939
+    volumes:
+      - ./data/db:/data/db
+    restart: unless-stopped
