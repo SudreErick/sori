@@ -19,7 +19,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     private final AuthenticationService authenticationService;
-
+    
     @Autowired
     public SecurityFilter(TokenService tokenService, AuthenticationService authenticationService) {
         this.tokenService = tokenService;
