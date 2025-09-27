@@ -1,0 +1,5 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost/testdb
+      # O embed-mongo configurará a porta automaticamente
