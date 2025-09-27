@@ -37,7 +37,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final SecurityFilter securityFilter;
-    private final UserDetailsService userDetailsService; // Injeção do Service que carrega o usuário
+    private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,18 +52,19 @@ public class SecurityConfig {
 
                 // Regras de Autorização
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. ROTAS DE AUTENTICAÇÃO (POST /api/auth/register e /api/auth/login)
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+
+                        // 1. ROTAS DE AUTENTICAÇÃO (/api/auth/**)
+                        // Libera TUDO que começa com /api/auth/**, garantindo que POST, GET, etc. funcionem.
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // 2. ROTAS PÚBLICAS DE DOCUMENTAÇÃO (Swagger UI)
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // 3. ROTAS GET PÚBLICAS (Se houver - no seu caso, listar Testes)
-                        // A rota GET /api/testes não exige autenticação? Se sim, libere-a aqui:
+                        // 3. ROTAS GET PÚBLICAS ADICIONAIS
+                        // Libera o GET para /api/testes, como definido para a listagem pública.
                         .requestMatchers(HttpMethod.GET, "/api/testes").permitAll()
 
                         // 4. Todas as outras rotas exigem autenticação
-                        // (Isso protege /api/checkins, /api/organizacoes (POST/PUT/DELETE), /api/usuarios, etc.)
                         .anyRequest().authenticated()
                 )
                 // Adiciona o filtro JWT antes do filtro padrão do Spring Security
@@ -86,7 +87,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailsService); // Usa o objeto injetado
+        provider.setUserDetailsService(userDetailsService);
         return provider;
     }
 
