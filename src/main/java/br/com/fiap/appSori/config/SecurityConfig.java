@@ -50,21 +50,22 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Regras de Autorização
                 .authorizeHttpRequests(authorize -> authorize
 
-                        // 1. ROTAS DE AUTENTICAÇÃO (/api/auth/**)
-                        // Libera TUDO que começa com /api/auth/**, garantindo que POST, GET, etc. funcionem.
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // 1. PRIORIDADE MÁXIMA: ROTA DE CADASTRO (POST)
+                        // Garante que esta rota específica seja liberada antes de qualquer outra regra.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
 
-                        // 2. ROTAS PÚBLICAS DE DOCUMENTAÇÃO (Swagger UI)
+                        // 2. ROTAS DE AUTENTICAÇÃO RESTANTES (LOGIN, etc.)
+                        .requestMatchers("/api/auth/**").permitAll() // Agora só para login e outras rotas auth
+
+                        // 3. ROTAS PÚBLICAS DE DOCUMENTAÇÃO (Swagger UI)
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // 3. ROTAS GET PÚBLICAS ADICIONAIS
-                        // Libera o GET para /api/testes, como definido para a listagem pública.
+                        // 4. ROTAS GET PÚBLICAS ADICIONAIS
                         .requestMatchers(HttpMethod.GET, "/api/testes").permitAll()
 
-                        // 4. Todas as outras rotas exigem autenticação
+                        // 5. Todas as outras rotas exigem autenticação
                         .anyRequest().authenticated()
                 )
                 // Adiciona o filtro JWT antes do filtro padrão do Spring Security

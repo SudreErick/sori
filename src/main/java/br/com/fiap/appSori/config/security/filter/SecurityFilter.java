@@ -19,7 +19,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     private final AuthenticationService authenticationService;
-    
+
     @Autowired
     public SecurityFilter(TokenService tokenService, AuthenticationService authenticationService) {
         this.tokenService = tokenService;
@@ -28,24 +28,27 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     /**
      * Define quais requisições NÃO DEVEM passar por este filtro.
-     * Rotas listadas aqui são consideradas públicas, ignorando a validação JWT.
+     * Rotas listadas aqui são consideradas públicas (permitAll).
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        // 1. Rotas de Autenticação (Cadastro e Login)
-        if (path.startsWith("/api/auth/")) {
+        // **Aprimoramento 1: Listagem explícita de rotas públicas.**
+
+        // Rotas de Autenticação (POST /api/auth/register e /api/auth/login)
+        if (path.startsWith("/api/auth/") || path.equals("/api/auth")) {
             return true;
         }
 
-        // 2. Rotas do Swagger/OpenAPI
-        if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs")) {
+        // Rotas do Swagger/OpenAPI
+        if (path.contains("/swagger-ui") || path.contains("/v3/api-docs")) {
             return true;
         }
 
-        // 3. Rota GET /api/testes (Se ela foi liberada no SecurityConfig)
-        if (request.getMethod().equals("GET") && path.equals("/api/testes")) {
+        // Rota GET /api/testes (Se ela for liberada)
+        if (method.equals("GET") && path.startsWith("/api/testes")) {
             return true;
         }
 
@@ -68,8 +71,9 @@ public class SecurityFilter extends OncePerRequestFilter {
             }
         }
 
-        // Se o token for nulo nesta fase, o Spring Security cuidará de gerar o 403/401
-        // por causa do .anyRequest().authenticated()
+        // Continua a cadeia de filtros.
+        // Se a autenticação falhar, o Spring Security, devido ao .anyRequest().authenticated(),
+        // emitirá o 401 Unauthorized (ou 403 Forbidden).
         filterChain.doFilter(request, response);
     }
 
@@ -78,6 +82,7 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (authHeader == null) {
             return null;
         }
+        // Remove 'Bearer ' e retorna o token limpo.
         return authHeader.replace("Bearer ", "");
     }
 }
