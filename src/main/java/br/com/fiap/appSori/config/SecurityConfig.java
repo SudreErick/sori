@@ -37,7 +37,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final SecurityFilter securityFilter;
-    private final UserDetailsService userDetailsService; // <--- ADICIONE A INJEÇÃO AQUI
+    private final UserDetailsService userDetailsService; // Injeção do Service que carrega o usuário
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,13 +52,18 @@ public class SecurityConfig {
 
                 // Regras de Autorização
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. Rotas de Autenticação (Login e Cadastro) e Swagger
-                        .requestMatchers("/api/auth/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // 1. ROTAS DE AUTENTICAÇÃO (POST /api/auth/register e /api/auth/login)
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
 
-                        // 2. Rota GET para listar Testes (AGORA LIBERADA!)
+                        // 2. ROTAS PÚBLICAS DE DOCUMENTAÇÃO (Swagger UI)
+                        .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                        // 3. ROTAS GET PÚBLICAS (Se houver - no seu caso, listar Testes)
+                        // A rota GET /api/testes não exige autenticação? Se sim, libere-a aqui:
                         .requestMatchers(HttpMethod.GET, "/api/testes").permitAll()
 
-                        // 3. Todas as outras rotas exigem autenticação
+                        // 4. Todas as outras rotas exigem autenticação
+                        // (Isso protege /api/checkins, /api/organizacoes (POST/PUT/DELETE), /api/usuarios, etc.)
                         .anyRequest().authenticated()
                 )
                 // Adiciona o filtro JWT antes do filtro padrão do Spring Security
@@ -77,12 +82,11 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // O bean UserDetailsService já foi injetado no construtor
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailsService); // <--- USA O OBJETO INJETADO
+        provider.setUserDetailsService(userDetailsService); // Usa o objeto injetado
         return provider;
     }
 
