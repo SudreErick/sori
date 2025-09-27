@@ -26,8 +26,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(securedEnabled = true) // Habilita a segurança por anotação (ex: @Secured)
-@RequiredArgsConstructor // Simplifica a injeção de dependência do SecurityFilter
+@EnableMethodSecurity(securedEnabled = true)
+@RequiredArgsConstructor
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,
@@ -36,7 +36,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 )
 public class SecurityConfig {
 
-    private final SecurityFilter securityFilter; // Mantenha o nome do seu filtro
+    private final SecurityFilter securityFilter;
+    private final UserDetailsService userDetailsService; // <--- ADICIONE A INJEÇÃO AQUI
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -76,12 +77,12 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // Corrigido para aceitar UserDetailsService (sua classe AuthenticationService)
+    // O bean UserDetailsService já foi injetado no construtor
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService) {
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsService); // <--- USA O OBJETO INJETADO
         return provider;
     }
 
