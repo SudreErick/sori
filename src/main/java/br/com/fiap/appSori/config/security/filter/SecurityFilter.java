@@ -26,8 +26,37 @@ public class SecurityFilter extends OncePerRequestFilter {
         this.authenticationService = authenticationService;
     }
 
+    /**
+     * Define quais requisições NÃO DEVEM passar por este filtro.
+     * Rotas listadas aqui são consideradas públicas, ignorando a validação JWT.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+
+        // 1. Rotas de Autenticação (Cadastro e Login)
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+
+        // 2. Rotas do Swagger/OpenAPI
+        if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs")) {
+            return true;
+        }
+
+        // 3. Rota GET /api/testes (Se ela foi liberada no SecurityConfig)
+        if (request.getMethod().equals("GET") && path.equals("/api/testes")) {
+            return true;
+        }
+
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // Esta lógica SÓ será executada se shouldNotFilter retornar FALSE.
+
         String token = this.recoverToken(request);
 
         if (token != null) {
@@ -38,6 +67,9 @@ public class SecurityFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
+
+        // Se o token for nulo nesta fase, o Spring Security cuidará de gerar o 403/401
+        // por causa do .anyRequest().authenticated()
         filterChain.doFilter(request, response);
     }
 
