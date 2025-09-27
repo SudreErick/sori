@@ -4,12 +4,19 @@ import br.com.fiap.appSori.config.security.filter.SecurityFilter;
 import br.com.fiap.appSori.repository.*;
 import br.com.fiap.appSori.service.auth.AuthenticationService;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = {
+		MongoAutoConfiguration.class,
+		MongoDataAutoConfiguration.class
+})
 class AppSoriApplicationTests {
 	// 1. MOCK DO BEAN PRINCIPAL FALTANTE
 	@MockBean
