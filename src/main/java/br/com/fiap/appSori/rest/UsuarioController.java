@@ -5,6 +5,7 @@ import br.com.fiap.appSori.domain.dto.request.UsuarioRequestDto;
 import br.com.fiap.appSori.domain.dto.response.UsuarioResponseDto;
 import br.com.fiap.appSori.mapper.UsuarioMapper;
 import br.com.fiap.appSori.service.UsuarioService;
+import br.com.fiap.appSori.service.auth.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,10 +24,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/usuarios")
 @Tag(name = "Usuários", description = "Endpoints para gerenciar os usuários")
 public class UsuarioController {
+
+    // Mantém o UsuarioService para as operações de consulta e atualização de perfil
     private final UsuarioService usuarioService;
+
+    //  NOVO: Injeta o AuthenticationService para o registro
+    private final AuthenticationService authenticationService;
+
     private final UsuarioMapper usuarioMapper;
 
-    @PostMapping
+    @PostMapping // Rota de REGISTRO (POST /api/usuarios)
     @Operation(summary = "Cria um novo usuário", description = "Endpoint para registrar um novo usuário na plataforma.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso."),
@@ -34,7 +41,10 @@ public class UsuarioController {
     })
     public ResponseEntity<UsuarioResponseDto> criarUsuario(@Valid @RequestBody UsuarioRequestDto requestDTO) {
         var usuarioDomain = usuarioMapper.toDomain(requestDTO);
-        var usuarioSalvo = usuarioService.criarUsuario(usuarioDomain);
+
+        // CORREÇÃO APLICADA: Chama o service que CRIPTOGRAFA a senha
+        var usuarioSalvo = authenticationService.registrar(usuarioDomain);
+
         var responseDTO = usuarioMapper.toDto(usuarioSalvo);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
@@ -105,11 +115,6 @@ public class UsuarioController {
     }
 
     // NOVO ENDPOINT DE ADMIN: Atualizar Perfil (Role)
-    /**
-     * Rota PUT: /api/usuarios/{id}/perfil
-     * ADMIN: Permite que um administrador altere o perfil (Role) de outro usuário.
-     * Esta rota deve ser protegida por hasRole('ADMIN').
-     */
     @PutMapping("/{id}/perfil")
     @Operation(summary = "ADMIN: Atualiza o perfil (role) de um usuário específico")
     @ApiResponses(value = {
@@ -128,5 +133,4 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
-
 }
