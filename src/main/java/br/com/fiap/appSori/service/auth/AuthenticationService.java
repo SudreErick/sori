@@ -32,7 +32,7 @@ public class AuthenticationService implements UserDetailsService {
      * Registra um novo usuário com criptografia de senha e define o perfil padrão.
      */
     public Usuario registrar(Usuario usuario) {
-        // ⭐️ CORREÇÃO APLICADA: Define o perfil padrão como CLIENTE
+        // ⭐CORREÇÃO APLICADA: Define o perfil padrão como CLIENTE
         if (usuario.getRole() == null) {
             usuario.setRole(Role.CLIENTE);
         }

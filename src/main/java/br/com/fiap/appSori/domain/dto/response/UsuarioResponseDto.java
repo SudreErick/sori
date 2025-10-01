@@ -15,6 +15,7 @@ public class UsuarioResponseDto {
     private String cpf;
     private String telefone;
     private String cargo;
+    private String role;
     private ZonedDateTime criadoEm;
     private ZonedDateTime atualizadoEm;
     private boolean ativo;

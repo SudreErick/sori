@@ -104,7 +104,7 @@ public class UsuarioController {
         return ResponseEntity.ok(responseDTOs);
     }
 
-    // ⭐️ NOVO ENDPOINT DE ADMIN: Atualizar Perfil (Role)
+    // NOVO ENDPOINT DE ADMIN: Atualizar Perfil (Role)
     /**
      * Rota PUT: /api/usuarios/{id}/perfil
      * ADMIN: Permite que um administrador altere o perfil (Role) de outro usuário.
