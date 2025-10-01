@@ -35,7 +35,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
         bearerFormat = "JWT"
 )
 public class SecurityConfig {
-
     private final SecurityFilter securityFilter;
     private final UserDetailsService userDetailsService;
 
@@ -53,27 +52,35 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
 
                         // 1. ROTAS PÚBLICAS (Registro, Login, Documentação)
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+
+                        // **CORREÇÃO AQUI**: Libera a rota POST do seu UsuarioController para registro
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+
+                        // Rotas de autenticação e login
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Swagger/Documentação
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                        // Rota de Testes (se for o caso)
                         .requestMatchers(HttpMethod.GET, "/api/testes").permitAll()
 
-                        // 2. NOVAS ROTAS DE ADMIN (Acesso Global)
+                        // 2. ROTAS DE ADMIN/GESTOR
                         // Acesso a todos os resultados
                         .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasRole("ADMIN")
                         // Acesso a todas as tentativas
                         .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasRole("ADMIN")
                         // Acesso a todos os check-ins e estatísticas globais
                         .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasRole("ADMIN")
-                        // Listar todos os usuários
+                        // Listar todos os usuários (GET /api/usuarios, diferente do POST de registro)
                         .requestMatchers(HttpMethod.GET, "/api/usuarios").hasRole("ADMIN")
-                        // Criação de novos modelos de teste, organizações, etc. (se for o caso)
+                        // Criação de novos modelos de teste, organizações, etc.
                         .requestMatchers(HttpMethod.POST, "/api/testes").hasRole("ADMIN")
                         .requestMatchers("/api/organizacoes/**").hasAnyRole("ADMIN", "GESTOR_ORG")
+                        // Atualização de perfil
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").hasRole("ADMIN")
 
-                        // 3. Todas as outras rotas (como POST /api/checkins, GET /api/resultados)
-                        // exigem autenticação (qualquer ROLE logado).
+                        // 3. Todas as outras rotas exigem autenticação (qualquer ROLE logado).
                         .anyRequest().authenticated()
                 )
                 // Adiciona o filtro JWT antes do filtro padrão do Spring Security

@@ -15,5 +15,4 @@ public class UsuarioRequestDto {
     private String cpf;
     private String telefone;
     private String cargo;
-    private String role;
 }

@@ -21,17 +21,8 @@ public class UsuarioMapper {
         usuario.setTelefone(dto.getTelefone());
         usuario.setCargo(dto.getCargo());
 
-        // Mapeamento da Role: Se a string não for nula, tente converter.
-        // Se a conversão falhar (nome inválido) ou a string for nula,
-        // o construtor de Usuario já garante o valor padrão (CLIENTE).
-        if (dto.getRole() != null) {
-            try {
-                usuario.setRole(Role.valueOf(dto.getRole().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                // Deixa o valor padrão (CLIENTE) definido no construtor de Usuario.
-                // Em produção, você pode querer logar esse erro ou lançar uma exceção de validação.
-            }
-        }
+        // A LÓGICA DE DEFINIR A ROLE FOI REMOVIDA DAQUI.
+        // O construtor 'new Usuario()' garante que a ROLE seja CLIENTE.
 
         return usuario;
     }
@@ -52,7 +43,7 @@ public class UsuarioMapper {
         dto.setAtualizadoEm(domain.getAtualizadoEm());
         dto.setAtivo(domain.isAtivo());
 
-        // Mapeamento da Role: Converte o Enum para String.
+        // Mapeamento da Role DE SAÍDA: Converte o Enum (que é CLIENTE) para String.
         if (domain.getRole() != null) {
             dto.setRole(domain.getRole().name());
         }
