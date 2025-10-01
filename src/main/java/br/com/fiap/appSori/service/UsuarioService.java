@@ -66,4 +66,15 @@ public class UsuarioService {
         // 3. Salva e retorna
         return usuarioRepository.save(usuario);
     }
+
+    /**
+     * ADMIN: Deleta um usuário por ID.
+     */
+    public void deletarUsuario(String id) {
+        if (!usuarioRepository.existsById(id)) {
+            // Usa a exceção que você já tem ou cria uma específica
+            throw new RuntimeException("Usuário não encontrado.");
+        }
+        usuarioRepository.deleteById(id);
+    }
 }

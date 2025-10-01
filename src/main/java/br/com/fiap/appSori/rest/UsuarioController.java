@@ -133,4 +133,21 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "ADMIN: Deleta um usuário por ID", description = "Endpoint para remover um usuário do sistema. Requer perfil ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Usuário deletado com sucesso."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. Requer perfil ADMIN."),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado.")
+    })
+    public ResponseEntity<Void> deletarUsuario(@PathVariable String id) {
+        try {
+            usuarioService.deletarUsuario(id);
+            return ResponseEntity.noContent().build(); // Retorna 204 No Content
+        } catch (RuntimeException e) {
+            // Captura o erro 'Usuário não encontrado' lançado pelo service
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

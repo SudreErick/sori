@@ -78,7 +78,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/testes").hasRole("ADMIN")
                         .requestMatchers("/api/organizacoes/**").hasAnyRole("ADMIN", "GESTOR_ORG")
                         // Atualização de perfil
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").authenticated()
 
                         // 3. Todas as outras rotas exigem autenticação (qualquer ROLE logado).
                         .anyRequest().authenticated()
