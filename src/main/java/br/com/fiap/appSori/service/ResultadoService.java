@@ -131,4 +131,19 @@ public class ResultadoService {
         List<Resultado> resultados = resultadoRepository.findByUsuarioAndTeste_Tipo(usuario, tipoTeste);
         return resultados.stream().map(resultadoMapper::toDto).collect(Collectors.toList());
     }
+
+    // NOVO MÉTODO: Acesso Global para ADMIN
+    /**
+     * Busca TODOS os resultados de todos os usuários.
+     * Este método será chamado pelo controller protegido por hasRole('ADMIN').
+     */
+    public List<ResultadoResponseDto> buscarTodosResultadosGlobais() {
+        // Usa o método findAll() do repositório para ignorar qualquer filtro de usuário.
+        List<Resultado> resultados = resultadoRepository.findAll();
+
+        // Mapeia a lista de domínios para a lista de DTOs de resposta
+        return resultados.stream()
+                .map(resultadoMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

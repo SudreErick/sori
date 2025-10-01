@@ -1,5 +1,6 @@
 package br.com.fiap.appSori.rest.auth;
 
+import br.com.fiap.appSori.domain.Usuario;
 import br.com.fiap.appSori.domain.dto.auth.request.LoginRequestDto;
 import br.com.fiap.appSori.domain.dto.request.UsuarioRequestDto;
 import br.com.fiap.appSori.domain.dto.auth.response.LoginResponseDto;
@@ -62,7 +63,14 @@ public class AuthenticationController {
         try {
             var authentication = new UsernamePasswordAuthenticationToken(requestDTO.getEmail(), requestDTO.getSenha());
             var authenticated = authenticationManager.authenticate(authentication);
-            var token = tokenService.generateToken((org.springframework.security.core.userdetails.UserDetails) authenticated.getPrincipal());
+
+            //CORREÇÃO APLICADA AQUI: Cast de Object para Usuario
+            // Assumimos que o objeto principal é de fato uma instância de Usuario.
+            Usuario usuario = (Usuario) authenticated.getPrincipal();
+
+            // Passa o objeto Usuario para o TokenService, resolvendo o erro de tipo.
+            var token = tokenService.generateToken(usuario);
+
             return ResponseEntity.ok(new LoginResponseDto(token));
         } catch (BadCredentialsException e) {
             System.err.println("Erro de credenciais inválidas: " + e.getMessage());

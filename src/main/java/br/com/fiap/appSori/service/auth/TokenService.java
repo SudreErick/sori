@@ -1,5 +1,6 @@
 package br.com.fiap.appSori.service.auth;
 
+import br.com.fiap.appSori.domain.Usuario;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -22,16 +23,23 @@ import java.util.UUID;
 @Service
 public class TokenService {
 
+
     @Value("${jwt.secret}")
     private String secret;
 
-    public String generateToken(UserDetails userDetails) throws JOSEException {
+    // ⭐️ MODIFICAÇÃO: Alterar o parâmetro de UserDetails para Usuario
+    public String generateToken(Usuario usuario) throws JOSEException {
+
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(userDetails.getUsername())
+                .subject(usuario.getUsername())
                 .issuer("projeto-psicosocial")
                 .issueTime(new Date())
                 .expirationTime(Date.from(ZonedDateTime.now().plus(24, ChronoUnit.HOURS).toInstant()))
                 .jwtID(UUID.randomUUID().toString())
+
+                // ⭐️ ADIÇÃO CRÍTICA: Adiciona o perfil (role) como uma claim
+                // Usamos .name() para armazenar a string exata (CLIENTE, ADMIN, etc.)
+                .claim("role", usuario.getRole().name())
                 .build();
 
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);

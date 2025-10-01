@@ -36,7 +36,7 @@ public class ResultadoController {
         }
     }
 
-    // Rota para buscar todos os resultados
+    // Rota para buscar todos os resultados do usuário logado
     @GetMapping
     @Operation(summary = "Busca todos os resultados do usuário logado")
     @ApiResponses(value = {
@@ -52,7 +52,7 @@ public class ResultadoController {
         }
     }
 
-    // Rota para buscar resultados por tipo
+    // Rota para buscar resultados por tipo do usuário logado
     @GetMapping("/tipo/{tipo}")
     @Operation(summary = "Busca resultados do usuário por tipo de teste")
     @ApiResponses(value = {
@@ -69,5 +69,20 @@ public class ResultadoController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // NOVO ENDPOINT DE ADMIN: Acesso a todos os resultados
+    @GetMapping("/global")
+    @Operation(summary = "ADMIN: Busca todos os resultados de todos os usuários")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Resultados encontrados."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. Requer perfil ADMIN.")
+    })
+    public ResponseEntity<List<ResultadoResponseDto>> listarTodosResultadosGlobais() {
+        // Não precisamos de bloco try-catch, pois se o serviço lançar uma exceção,
+        // ela será tratada por um @ControllerAdvice ou resultará em 500.
+        // O 403 é tratado pelo Spring Security ANTES de chegar aqui.
+        List<ResultadoResponseDto> resultados = resultadoService.buscarTodosResultadosGlobais();
+        return ResponseEntity.ok(resultados);
     }
 }

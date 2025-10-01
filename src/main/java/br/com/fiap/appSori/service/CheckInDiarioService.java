@@ -28,7 +28,7 @@ public class CheckInDiarioService {
     private final CheckInDiarioMapper checkinDiarioMapper;
     private final UsuarioRepository usuarioRepository;
 
-    // --- Lógica de Persistência (POST /api/checkins) ---
+    // --- MÉTODOS DE CLIENTE ---
 
     public CheckInDiarioResponseDto registrarCheckin(CheckInDiarioRequestDto requestDto) {
         Usuario usuario = getUsuarioLogado();
@@ -52,13 +52,6 @@ public class CheckInDiarioService {
         return checkinDiarioMapper.toDto(checkinSalvo);
     }
 
-    // --- Lógica de Dashboard (GET /api/checkins/estatisticas) ---
-
-    /**
-     * Calcula a frequência e porcentagem dos sentimentos registrados para o Dashboard.
-     * @param dias O período (ex: 7, 30, 365) para o cálculo.
-     * @return DTO com o Sentimento Mais Frequente e a lista de detalhes.
-     */
     public EstatisticaSentimentoResponseDto calcularEstatisticasSentimento(int dias) {
         Usuario usuario = getUsuarioLogado();
 
@@ -77,7 +70,6 @@ public class CheckInDiarioService {
         // 2. Agrega a contagem de todos os sentimentos no período
         Map<SentimentoDiario, Long> contagemSentimentos = checkinsFiltrados.stream()
                 .flatMap(checkin -> {
-                    // Força a tipagem explícita aqui para resolver o erro "Cannot resolve method 'stream()'"
                     List<SentimentoDiario> sentimentos = checkin.getSentimentos();
                     return sentimentos.stream();
                 })
@@ -94,7 +86,7 @@ public class CheckInDiarioService {
                     double porcentagem = (double) contagem * 100 / totalRegistros;
 
                     return EstatisticaSentimentoResponseDto.DetalheSentimento.builder()
-                            .sentimento(sentimento.getDescricao()) // Acessando o valor string do Enum (requer @Getter no Enum)
+                            .sentimento(sentimento.getDescricao())
                             .contagem((int) contagem)
                             .porcentagem(porcentagem)
                             .build();
@@ -115,13 +107,84 @@ public class CheckInDiarioService {
                 .build();
     }
 
-    // --- Método Auxiliar para Obter Usuário Logado ---
+    // --- MÉTODOS AUXILIARES ---
 
     private Usuario getUsuarioLogado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String usuarioEmail = authentication.getName();
         return usuarioRepository.findByEmail(usuarioEmail)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+    }
+
+    // --- MÉTODOS DE ADMIN (ACESSOS GLOBAIS) ---
+
+    // NOVO MÉTODO: Listar TODOS os check-ins (Visão Admin)
+    /**
+     * ADMIN: Retorna todos os check-ins de todos os usuários.
+     */
+    public List<CheckInDiarioResponseDto> buscarTodosCheckinsGlobais() {
+        List<CheckInDiario> checkins = checkinDiarioRepository.findAll();
+        return checkins.stream()
+                .map(checkinDiarioMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    // NOVO MÉTODO: Calcular Estatísticas de Sentimento para TODOS os usuários (Visão Admin)
+    /**
+     * ADMIN: Calcula a frequência e porcentagem dos sentimentos registrados em TODOS os check-ins.
+     * @param dias O período (ex: 7, 30, 365) para o cálculo.
+     * @return DTO com o Sentimento Mais Frequente e a lista de detalhes GLOBAIS.
+     */
+    public EstatisticaSentimentoResponseDto calcularEstatisticasSentimentoGlobal(int dias) {
+        // 1. Busca TODOS os check-ins
+        List<CheckInDiario> todosCheckins = checkinDiarioRepository.findAll();
+
+        // Aplica o filtro de período GLOBAL
+        List<CheckInDiario> checkinsFiltrados = todosCheckins.stream()
+                .filter(c -> c.getDataCheckin().isAfter(LocalDate.now().minusDays(dias)))
+                .collect(Collectors.toList());
+
+        if (checkinsFiltrados.isEmpty()) {
+            return new EstatisticaSentimentoResponseDto();
+        }
+
+        // 2. Agrega a contagem de todos os sentimentos no período
+        Map<SentimentoDiario, Long> contagemSentimentos = checkinsFiltrados.stream()
+                .flatMap(checkin -> {
+                    List<SentimentoDiario> sentimentos = checkin.getSentimentos();
+                    return sentimentos.stream();
+                })
+                .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+
+        long totalRegistros = contagemSentimentos.values().stream().mapToLong(Long::longValue).sum();
+
+        // 3. Mapeia para o DTO de Detalhes e encontra o Sentimento Frequente
+        List<EstatisticaSentimentoResponseDto.DetalheSentimento> detalhes = contagemSentimentos.entrySet().stream()
+                .map(entry -> {
+                    SentimentoDiario sentimento = entry.getKey();
+                    long contagem = entry.getValue();
+                    double porcentagem = (double) contagem * 100 / totalRegistros;
+
+                    return EstatisticaSentimentoResponseDto.DetalheSentimento.builder()
+                            .sentimento(sentimento.getDescricao())
+                            .contagem((int) contagem)
+                            .porcentagem(porcentagem)
+                            .build();
+                })
+                .sorted(Comparator.comparing(EstatisticaSentimentoResponseDto.DetalheSentimento::getContagem).reversed())
+                .collect(Collectors.toList());
+
+        // 4. Identifica o sentimento mais frequente
+        String sentimentoFrequente = detalhes.stream()
+                .findFirst()
+                .map(EstatisticaSentimentoResponseDto.DetalheSentimento::getSentimento)
+                .orElse("N/A");
+
+        // 5. Retorna o DTO final do Dashboard
+        return EstatisticaSentimentoResponseDto.builder()
+                .sentimentoFrequente(sentimentoFrequente)
+                .detalhes(detalhes)
+                .build();
     }
 
 }

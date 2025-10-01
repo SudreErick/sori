@@ -16,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -145,6 +144,20 @@ public class TentativaService {
         }
 
         return tentativaMapper.toDto(tentativa);
+    }
+
+    // NOVO MÉTODO: Acesso Global para ADMIN
+    /**
+     * ADMIN: Busca o histórico completo de tentativas de TODOS os usuários.
+     * @return Lista de TentativaResponseDto
+     */
+    public List<TentativaResponseDto> buscarTodasTentativasGlobais() {
+        // Usa o findAll() do repositório para ignorar o filtro de usuário.
+        List<Tentativa> todasTentativas = tentativaRepository.findAll();
+
+        return todasTentativas.stream()
+                .map(tentativaMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     // --- Métodos Auxiliares ---

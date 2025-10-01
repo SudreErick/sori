@@ -4,6 +4,8 @@ import br.com.fiap.appSori.domain.dto.request.TentativaRequestDto;
 import br.com.fiap.appSori.domain.dto.response.TentativaResponseDto;
 import br.com.fiap.appSori.service.TentativaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +23,11 @@ public class TentativaController {
 
     private final TentativaService tentativaService;
 
+    // --- ROTAS DE CLIENTE ---
+
     /**
      * Rota POST: Inicia um novo teste, salva o progresso ou conclui uma tentativa.
      * Esta é a rota principal, que cobre o ciclo de vida completo.
-     * * @param requestDto Contém o ID do teste (para iniciar) e a lista de respostas.
-     * @return O status atualizado da Tentativa.
      */
     @PostMapping
     @Operation(summary = "Inicia um teste, salva o progresso ou conclui uma tentativa")
@@ -39,14 +41,12 @@ public class TentativaController {
 
         } catch (RuntimeException e) {
             // Erros de negócio (ex: Usuário não encontrado, tentativa já ativa)
-            // Para depuração: você pode retornar a mensagem do erro se quiser: ResponseEntity.badRequest().body(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
 
     /**
-     * Rota GET: Lista todas as tentativas (concluídas ou em andamento) do usuário logado.
-     * * @return Lista de todas as Tentativas do usuário.
+     * Rota GET: Lista todas as tentativas (histórico completo) do usuário logado.
      */
     @GetMapping
     @Operation(summary = "Lista todas as tentativas (histórico completo) do usuário logado")
@@ -58,9 +58,6 @@ public class TentativaController {
 
     /**
      * Rota GET: Busca uma tentativa específica pelo seu ID.
-     * Útil para o front-end carregar um teste em andamento.
-     * * @param id O ID da Tentativa.
-     * @return O status detalhado da Tentativa.
      */
     @GetMapping("/{id}")
     @Operation(summary = "Busca uma tentativa específica pelo ID")
@@ -72,5 +69,23 @@ public class TentativaController {
             // Tentativa não encontrada ou não pertence ao usuário
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // ⭐️ NOVA ROTA DE ADMIN (ACESSOS GLOBAIS)
+    /**
+     * Rota GET: /api/tentativas/global
+     * ADMIN: Retorna a lista de todas as tentativas de TODOS os usuários.
+     * Protegido por hasRole('ADMIN') no SecurityConfig.
+     * @return Lista de todas as Tentativas de todos os usuários.
+     */
+    @GetMapping("/global")
+    @Operation(summary = "ADMIN: Lista todas as tentativas (histórico completo) de todos os usuários")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de tentativas globais retornada."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. Requer perfil ADMIN.")
+    })
+    public ResponseEntity<List<TentativaResponseDto>> listarTodasTentativasGlobais() {
+        List<TentativaResponseDto> tentativas = tentativaService.buscarTodasTentativasGlobais();
+        return ResponseEntity.ok(tentativas);
     }
 }

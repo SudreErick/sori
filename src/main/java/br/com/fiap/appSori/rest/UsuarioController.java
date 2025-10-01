@@ -1,5 +1,6 @@
 package br.com.fiap.appSori.rest;
 
+import br.com.fiap.appSori.domain.dto.request.AtualizarPerfilRequestDto;
 import br.com.fiap.appSori.domain.dto.request.UsuarioRequestDto;
 import br.com.fiap.appSori.domain.dto.response.UsuarioResponseDto;
 import br.com.fiap.appSori.mapper.UsuarioMapper;
@@ -102,4 +103,30 @@ public class UsuarioController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responseDTOs);
     }
+
+    // ⭐️ NOVO ENDPOINT DE ADMIN: Atualizar Perfil (Role)
+    /**
+     * Rota PUT: /api/usuarios/{id}/perfil
+     * ADMIN: Permite que um administrador altere o perfil (Role) de outro usuário.
+     * Esta rota deve ser protegida por hasRole('ADMIN').
+     */
+    @PutMapping("/{id}/perfil")
+    @Operation(summary = "ADMIN: Atualiza o perfil (role) de um usuário específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. Requer perfil ADMIN."),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado.")
+    })
+    public ResponseEntity<UsuarioResponseDto> atualizarPerfil(
+            @PathVariable String id,
+            @RequestBody @Valid AtualizarPerfilRequestDto requestDto) {
+        try {
+            var usuarioAtualizado = usuarioService.atualizarPerfilUsuario(id, requestDto.getPerfil());
+            return ResponseEntity.ok(usuarioMapper.toDto(usuarioAtualizado));
+        } catch (RuntimeException e) {
+            // Captura o erro 'Usuário não encontrado' lançado pelo service
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
