@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PerguntaResponseDto {
+    private String id;
     private String texto;
     private List<OpcaoRespostaResponseDto> opcoes;
 }

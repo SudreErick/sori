@@ -13,7 +13,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ResultadoMapper {
-    // Mapeamento de RequestDto para Entidade
+    // --- Mapeamento de RequestDto para Entidade (Criação) ---
     @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "teste", ignore = true),
@@ -24,7 +24,7 @@ public interface ResultadoMapper {
     })
     Resultado toDomain(ResultadoRequestDto dto);
 
-    // Mapeamento de Entidade para ResponseDto
+    // --- Mapeamento de Entidade para ResponseDto (Consulta) ---
     @Mappings({
             @Mapping(target = "testeId", source = "teste.id"),
             @Mapping(target = "tipoTeste", source = "teste.tipo"),
@@ -32,11 +32,24 @@ public interface ResultadoMapper {
     })
     ResultadoResponseDto toDto(Resultado domain);
 
-    // Mapeamento de listas e subdocumentos
-    List<RespostaUsuarioResponseDto> toRespostaUsuarioResponseDtoList(List<RespostaUsuarioRequestDto> requestList);
-    List<RespostaUsuarioRequestDto> toRespostaUsuarioRequestDtoList(List<RespostaUsuarioResponseDto> responseList);
+    // --- Mapeamento de subdocumentos (Correção do Erro de Compilação) ---
 
-    // Mapeamento entre os subdocumentos
+    /**
+     * Mapeia os dados de Resposta Request para Response.
+     * Corrigimos o nome do campo de 'textoPergunta' para 'perguntaTexto' (linha 51).
+     */
+    @Mappings({
+            @Mapping(source = "perguntaId", target = "perguntaId"),
+            @Mapping(source = "perguntaTexto", target = "perguntaTexto"), // ✅ CORRIGIDO AQUI
+            @Mapping(source = "respostaSelecionada", target = "respostaSelecionada"),
+            @Mapping(source = "valorAtribuido", target = "valorAtribuido")
+    })
     RespostaUsuarioResponseDto toRespostaUsuarioResponseDto(RespostaUsuarioRequestDto request);
+
+    // Mapeamento de lista Request para Response (necessário no toDto principal)
+    List<RespostaUsuarioResponseDto> toRespostaUsuarioResponseDtoList(List<RespostaUsuarioRequestDto> requestList);
+
+    // Mapeamento inverso
     RespostaUsuarioRequestDto toRespostaUsuarioRequestDto(RespostaUsuarioResponseDto response);
+    List<RespostaUsuarioRequestDto> toRespostaUsuarioRequestDtoList(List<RespostaUsuarioResponseDto> responseList);
 }

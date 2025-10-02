@@ -72,4 +72,23 @@ public class TesteController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "ADMIN: Exclui um modelo de teste pelo ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Teste excluído com sucesso."),
+            @ApiResponse(responseCode = "404", description = "Teste não encontrado."),
+            @ApiResponse(responseCode = "403", description = "Acesso negado. Requer perfil ADMIN.")
+    })
+    public ResponseEntity<Void> excluirTeste(@PathVariable String id) {
+        try {
+            // NOTA: A autorização (ADMIN) deve ser configurada no Spring Security.
+            testeService.excluirTeste(id);
+            // Retorna 204 No Content para exclusão bem-sucedida
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            // Teste não encontrado para exclusão
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

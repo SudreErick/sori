@@ -13,3 +13,5 @@ public class RespostaUsuarioRequestDto {
     private String respostaSelecionada;
     private int valorAtribuido;
 }
+
+

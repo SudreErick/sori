@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor // Gera um construtor sem argumentos
 @AllArgsConstructor
 public class Pergunta {
+    private String id;
     private String texto;
     private List<OpcaoResposta> opcoes;
 }

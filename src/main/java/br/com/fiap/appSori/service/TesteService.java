@@ -26,6 +26,8 @@ public class TesteService {
      */
     public TesteResponseDto criarTeste(TesteRequestDto dto) {
         // Mapeia o DTO para a entidade de domínio
+        // NOTA: Se o 'PerguntaRequestDto' não tiver um ID, o mapper
+        // DEVE ser configurado para gerar um UUID aqui e atribuí-lo à entidade 'Pergunta'.
         Teste teste = testeMapper.toDomain(dto);
 
         // Salva no repositório
@@ -49,8 +51,8 @@ public class TesteService {
 
     /**
      * Busca um teste pelo ID e lança exceção se não for encontrado.
-     * Este método foi adicionado para suportar a rota GET /api/testes/{id}.
-     * * @param id O ID do teste
+     * Este método é crucial para o Frontend carregar o Teste completo, incluindo os IDs das perguntas.
+     * @param id O ID do teste
      * @return TesteResponseDto
      */
     public TesteResponseDto buscarPorId(String id) {
@@ -59,15 +61,22 @@ public class TesteService {
                 .orElseThrow(() -> new RuntimeException("Teste não encontrado."));
 
         // 2. Mapeia a entidade para o DTO de resposta
+        // Este DTO (TesteResponseDto) DEVE incluir o ID de cada pergunta.
         return testeMapper.toDto(teste);
     }
 
-    /*
-     * Nota: O método de filtro (buscarPorFiltro) mencionado no Controller
-     * não está implementado aqui, mas você adicionaria ele assim:
-     * * public List<TesteResponseDto> buscarPorFiltro(String filtro) {
-     * // Ex: return testeRepository.findByTituloContainingIgnoreCase(filtro)
-     * // .stream().map(testeMapper::toDto).collect(Collectors.toList());
-     * }
-     */
+    public void excluirTeste(String id) {
+        // 1. Verifica se o Teste existe para retornar 404 se não for encontrado
+        if (!testeRepository.existsById(id)) {
+            // Lança uma RuntimeException que será capturada no Controller e retornará 404
+            throw new RuntimeException("Teste com ID " + id + " não encontrado.");
+        }
+
+        // 2. Exclui o teste
+        testeRepository.deleteById(id);
+
+        // IMPORTANTE: Em um sistema real, você também precisaria
+        // verificar se há tentativas ou resultados ativos referenciando este teste
+        // e impedir a exclusão ou limpar esses dados.
+    }
 }

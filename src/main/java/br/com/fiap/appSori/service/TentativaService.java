@@ -1,6 +1,8 @@
 package br.com.fiap.appSori.service;
 
+import br.com.fiap.appSori.domain.Pergunta;
 import br.com.fiap.appSori.domain.Tentativa;
+import br.com.fiap.appSori.domain.Teste;
 import br.com.fiap.appSori.domain.Usuario;
 import br.com.fiap.appSori.domain.dto.request.RespostaUsuarioRequestDto;
 import br.com.fiap.appSori.domain.dto.request.ResultadoRequestDto;
@@ -75,20 +77,40 @@ public class TentativaService {
 
     /**
      * Conclui a tentativa, aciona o serviço de resultado e salva o status final.
+     * **REFATORADO**: Busca o Teste para obter o texto da Pergunta e da Opção.
      */
     private TentativaResponseDto concluirTentativa(Tentativa tentativa) {
+        // ESSENCIAL: Buscar o Teste completo para mapear os textos das perguntas
+        Teste testeCompleto = testeRepository.findById(tentativa.getTeste().getId())
+                .orElseThrow(() -> new RuntimeException("Teste referenciado não encontrado. Impossível concluir."));
+
         // 1. Converte as respostas brutas da Tentativa para o formato de Request do Resultado
         List<RespostaUsuarioRequestDto> respostasResultado = tentativa.getRespostas().stream()
                 .map(resposta -> {
+                    // Localiza a pergunta correspondente no Teste usando o ID da RespostaBruta
+                    Pergunta pergunta = testeCompleto.getPerguntas().stream()
+                            .filter(p -> p.getId().equals(resposta.getPerguntaId())) // Requer que Pergunta tenha um ID!
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Pergunta ID " + resposta.getPerguntaId() + " não encontrada no Teste."));
+
+                    // Localiza o texto da opção selecionada
+                    String respostaTexto = pergunta.getOpcoes().stream()
+                            .filter(o -> o.getValor() == resposta.getValorAtribuido())
+                            .map(o -> o.getTexto())
+                            .findFirst()
+                            // Se a RespostaBruta tiver o campo 'respostaSelecionada', você pode usar ele aqui
+                            // Caso contrário, usamos a busca acima
+                            .orElse("Valor da Resposta não encontrado");
+
                     RespostaUsuarioRequestDto dto = new RespostaUsuarioRequestDto();
 
-                    // Dados disponíveis (ID e Valor)
+                    // Dados essenciais para o cálculo
                     dto.setPerguntaId(resposta.getPerguntaId());
                     dto.setValorAtribuido(resposta.getValorAtribuido());
 
-                    // Campos que a Tentativa não possui e ficam nulos (conforme ajuste):
-                    dto.setPerguntaTexto(null);
-                    dto.setRespostaSelecionada(null);
+                    // CAMPOS CORRIGIDOS: Preenchidos com a busca no Teste (Agora não são mais null)
+                    dto.setPerguntaTexto(pergunta.getTexto());
+                    dto.setRespostaSelecionada(respostaTexto);
 
                     return dto;
                 })
@@ -96,7 +118,7 @@ public class TentativaService {
 
         // 2. Cria o DTO do Resultado para enviar ao ResultadoService
         ResultadoRequestDto resultadoRequest = new ResultadoRequestDto();
-        resultadoRequest.setTesteId(tentativa.getTeste().getId());
+        resultadoRequest.setTesteId(testeCompleto.getId());
         resultadoRequest.setRespostas(respostasResultado);
 
         // 3. Salva o resultado processado (isso dispara o cálculo de risco)
@@ -182,6 +204,7 @@ public class TentativaService {
         // 2. Cria a nova entidade
         Tentativa novaTentativa = new Tentativa();
         novaTentativa.setUsuario(usuario);
+        // Garante que o Teste é carregado no BE para futura referência
         novaTentativa.setTeste(testeRepository.findById(testeId)
                 .orElseThrow(() -> new RuntimeException("Teste não encontrado.")));
         novaTentativa.setStatus(StatusTentativa.INICIADA);

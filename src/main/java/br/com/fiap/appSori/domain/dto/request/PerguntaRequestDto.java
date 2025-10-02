@@ -8,6 +8,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PerguntaRequestDto {
+    private String id;
     private String texto;
     private List<OpcaoRespostaRequestDto> opcoes;
 }
