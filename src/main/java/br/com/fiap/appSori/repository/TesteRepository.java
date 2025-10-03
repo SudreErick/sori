@@ -9,5 +9,9 @@ import java.util.List;
 
 @Repository
 public interface TesteRepository  extends MongoRepository<Teste, String> {
+    // Busca por Tipo
     List<Teste> findByTipo(TipoTeste tipo);
+
+    // Busca testes pelo status de ativo/inativo (suporta a nova regra de 'disponíveis')
+    List<Teste> findByAtivo(Boolean ativo);
 }

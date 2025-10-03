@@ -22,6 +22,12 @@ public class Teste {
     private String descricao;
     private int tempoEstimadoMinutos;
     private List<Pergunta> perguntas;
+
+    /**
+     * Campo adicionado para indicar se o teste está ativo e disponível para ser realizado.
+     * Default deve ser false (rascunho) na criação, e ativado pelo ADMIN/GESTOR.
+     */
+    private Boolean ativo = false;
 }
 
 

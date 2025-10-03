@@ -16,4 +16,5 @@ public class TesteResponseDto {
     private String descricao;
     private int tempoEstimadoMinutos;
     private List<PerguntaResponseDto> perguntas;
+    private boolean ativo;
 }

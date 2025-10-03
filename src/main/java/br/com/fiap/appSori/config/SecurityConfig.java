@@ -52,31 +52,30 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // 2. ROTAS DE TESTES (AJUSTADO PARA ABRANGER BUSCA POR ID)
+                        // 2. ROTAS DE TESTES (TODAS CORRIGIDAS PARA hasAuthority)
+
+                        // Rota ADMIN: Busca todos os testes (incluindo rascunhos, inativos, etc.)
+                        .requestMatchers(HttpMethod.GET, "/api/testes/admin/todos").hasAuthority("ADMIN")
 
                         // Criação (POST): Apenas ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/testes").hasRole("ADMIN")
-
-                        // Busca e Leitura (GET): Se você quer que TODOS (logados) vejam,
-                        // a configuração 'anyRequest().authenticated()' no final já serve.
-                        // Mas vamos garantir que GESTOR_ORG e ADMIN possam ver (e CLIENTE, se necessário).
-                        // Se o CLIENTE PODE VER, use hasAnyRole. Se apenas ADMIN/GESTOR_ORG podem ver, use as roles específicas.
-                        .requestMatchers(HttpMethod.GET, "/api/testes").hasAnyRole("ADMIN", "GESTOR_ORG", "CLIENTE")
-
-                        // Busca por ID (GET com curinga): Essencial para buscar testes específicos.
-                        .requestMatchers(HttpMethod.GET, "/api/testes/**").hasAnyRole("ADMIN", "GESTOR_ORG", "CLIENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/testes").hasAuthority("ADMIN")
 
                         // Exclusão (DELETE): Apenas ADMIN
-                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasAuthority("ADMIN")
 
-                        // 3. ROTAS DE ADMIN/GESTOR
-                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasRole("ADMIN")
+                        // Busca e Leitura (GET): Rotas de usuário (lista, por ID, disponíveis, realizados)
+                        // Todos os logados podem acessar estas rotas:
+                        .requestMatchers(HttpMethod.GET, "/api/testes/**").hasAnyAuthority("ADMIN", "GESTOR_ORG", "CLIENTE")
+
+
+                        // 3. ROTAS DE ADMIN/GESTOR (CORRIGIDAS PARA hasAuthority)
+                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAuthority("ADMIN")
 
                         // Rotas de Organizações
-                        .requestMatchers("/api/organizacoes/**").hasAnyRole("ADMIN", "GESTOR_ORG")
+                        .requestMatchers("/api/organizacoes/**").hasAnyAuthority("ADMIN", "GESTOR_ORG")
 
                         // Atualização de perfil
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").authenticated()

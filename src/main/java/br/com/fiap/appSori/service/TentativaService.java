@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -133,6 +134,49 @@ public class TentativaService {
         return tentativaMapper.toDto(tentativaConcluida);
     }
 
+    // --- MÉTODOS DE CONSULTA ADICIONADOS PARA O TesteService ---
+
+    /**
+     * NOVO: Busca os IDs de todos os Testes que o usuário JÁ REALIZOU (Status CONCLUIDA).
+     * Este método é usado pelo TesteService para filtrar testes DISPONÍVEIS.
+     *
+     * @param usuarioEmail O email do usuário.
+     * @return Um Set com os IDs dos testes concluídos.
+     */
+    public Set<String> buscarIdsTestesRealizadosPor(String usuarioEmail) {
+        Usuario usuario = usuarioRepository.findByEmail(usuarioEmail)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Implementação: Busca todas as tentativas CONCLUÍDAS
+        List<Tentativa> tentativasConcluidas = tentativaRepository.findByUsuarioAndStatus(usuario, StatusTentativa.CONCLUIDA);
+
+        return tentativasConcluidas.stream()
+                .map(tentativa -> tentativa.getTeste().getId())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * NOVO: Busca as entidades Teste correspondentes aos testes que o usuário JÁ REALIZOU.
+     * Este método é usado pelo TesteService para a rota '/realizados'.
+     *
+     * @param usuarioEmail O email do usuário.
+     * @return Uma lista das entidades Teste que foram concluídas pelo usuário.
+     */
+    public List<Teste> buscarTestesRealizadosPor(String usuarioEmail) {
+        Usuario usuario = usuarioRepository.findByEmail(usuarioEmail)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        // Busca todas as tentativas CONCLUÍDAS
+        List<Tentativa> tentativasConcluidas = tentativaRepository.findByUsuarioAndStatus(usuario, StatusTentativa.CONCLUIDA);
+
+        // Mapeia e retorna a entidade Teste (sem duplicatas, pois é um Set)
+        return tentativasConcluidas.stream()
+                .map(Tentativa::getTeste)
+                .distinct() // Remove testes duplicados se o usuário tiver feito o mesmo teste mais de uma vez
+                .collect(Collectors.toList());
+    }
+
+
     // --- Métodos de Busca (GET) ---
 
     /**
@@ -141,9 +185,7 @@ public class TentativaService {
      */
     public List<TentativaResponseDto> buscarTodasTentativasDoUsuario() {
         Usuario usuario = getUsuarioLogado();
-
         List<Tentativa> tentativas = tentativaRepository.findByUsuario(usuario);
-
         return tentativas.stream()
                 .map(tentativaMapper::toDto)
                 .collect(Collectors.toList());
@@ -176,7 +218,6 @@ public class TentativaService {
     public List<TentativaResponseDto> buscarTodasTentativasGlobais() {
         // Usa o findAll() do repositório para ignorar o filtro de usuário.
         List<Tentativa> todasTentativas = tentativaRepository.findAll();
-
         return todasTentativas.stream()
                 .map(tentativaMapper::toDto)
                 .collect(Collectors.toList());
@@ -195,6 +236,7 @@ public class TentativaService {
     private Tentativa criarNovaTentativa(Usuario usuario, String testeId) {
         // 1. Verifica se já existe uma tentativa EM_ANDAMENTO ou INICIADA
         List<StatusTentativa> statusAtivos = List.of(StatusTentativa.INICIADA, StatusTentativa.EM_ANDAMENTO);
+        // NOTA: É necessário um método de Repository: findByUsuarioAndTeste_IdAndStatusIn
         List<Tentativa> ativas = tentativaRepository.findByUsuarioAndTeste_IdAndStatusIn(usuario, testeId, statusAtivos);
 
         if (!ativas.isEmpty()) {
@@ -218,6 +260,7 @@ public class TentativaService {
         if (testeId == null) return Optional.empty();
 
         List<StatusTentativa> statusAtivos = List.of(StatusTentativa.INICIADA, StatusTentativa.EM_ANDAMENTO);
+        // NOTA: É necessário um método de Repository: findByUsuarioAndTeste_IdAndStatusIn
         List<Tentativa> ativas = tentativaRepository.findByUsuarioAndTeste_IdAndStatusIn(usuario, testeId, statusAtivos);
 
         // Retorna a primeira (e única, se a regra for respeitada) tentativa ativa encontrada

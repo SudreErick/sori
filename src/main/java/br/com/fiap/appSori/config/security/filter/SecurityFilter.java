@@ -28,17 +28,14 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     /**
      * Define quais requisições NÃO DEVEM passar por este filtro.
-     * Rotas listadas aqui são consideradas públicas (permitAll).
+     * Deixamos apenas as rotas *absolutamente públicas* aqui.
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        String method = request.getMethod();
-
-        // **Aprimoramento 1: Listagem explícita de rotas públicas.**
 
         // Rotas de Autenticação (POST /api/auth/register e /api/auth/login)
-        if (path.startsWith("/api/auth/") || path.equals("/api/auth")) {
+        if (path.startsWith("/api/auth")) {
             return true;
         }
 
@@ -47,18 +44,13 @@ public class SecurityFilter extends OncePerRequestFilter {
             return true;
         }
 
-        // Rota GET /api/testes (Se ela for liberada)
-        if (method.equals("GET") && path.startsWith("/api/testes")) {
-            return true;
-        }
-
+        // Todas as outras rotas (incluindo GET /api/testes) DEVEM passar pelo filtro
+        // para que o token seja extraído, mesmo que a SecurityConfig dê permissão total.
         return false;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        // Esta lógica SÓ será executada se shouldNotFilter retornar FALSE.
 
         String token = this.recoverToken(request);
 
@@ -66,14 +58,15 @@ public class SecurityFilter extends OncePerRequestFilter {
             String email = tokenService.getSubject(token);
             if (email != null) {
                 var userDetails = authenticationService.loadUserByUsername(email);
+
+                // O ponto crucial: userDetails.getAuthorities() deve retornar a autoridade
+                // exata (ex: "ADMIN", "CLIENTE") que o hasAuthority() espera.
                 var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 
-        // Continua a cadeia de filtros.
-        // Se a autenticação falhar, o Spring Security, devido ao .anyRequest().authenticated(),
-        // emitirá o 401 Unauthorized (ou 403 Forbidden).
         filterChain.doFilter(request, response);
     }
 
@@ -82,7 +75,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (authHeader == null) {
             return null;
         }
-        // Remove 'Bearer ' e retorna o token limpo.
         return authHeader.replace("Bearer ", "");
     }
 }
