@@ -12,10 +12,9 @@ public class UsuarioResponseDto {
     private String id;
     private String nomeCompleto;
     private String email;
-    private String cpf;
-    private String telefone;
     private String cargo;
     private String role;
+    private Boolean primeiroLogin;
     private ZonedDateTime criadoEm;
     private ZonedDateTime atualizadoEm;
     private boolean ativo;

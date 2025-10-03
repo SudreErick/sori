@@ -17,12 +17,10 @@ public class UsuarioMapper {
         usuario.setNomeCompleto(dto.getNomeCompleto());
         usuario.setEmail(dto.getEmail());
         usuario.setSenha(dto.getSenha());
-        usuario.setCpf(dto.getCpf());
-        usuario.setTelefone(dto.getTelefone());
         usuario.setCargo(dto.getCargo());
 
-        // A LÓGICA DE DEFINIR A ROLE FOI REMOVIDA DAQUI.
-        // O construtor 'new Usuario()' garante que a ROLE seja CLIENTE.
+        // CPF e Telefone serão nulos aqui se não vieram no Request DTO simplificado,
+        // o que sinaliza que o usuário precisa completar o cadastro.
 
         return usuario;
     }
@@ -36,17 +34,18 @@ public class UsuarioMapper {
         dto.setId(domain.getId());
         dto.setNomeCompleto(domain.getNomeCompleto());
         dto.setEmail(domain.getEmail());
-        dto.setCpf(domain.getCpf());
-        dto.setTelefone(domain.getTelefone());
         dto.setCargo(domain.getCargo());
         dto.setCriadoEm(domain.getCriadoEm());
         dto.setAtualizadoEm(domain.getAtualizadoEm());
         dto.setAtivo(domain.isAtivo());
 
-        // Mapeamento da Role DE SAÍDA: Converte o Enum (que é CLIENTE) para String.
+        // Mapeamento da Role DE SAÍDA
         if (domain.getRole() != null) {
             dto.setRole(domain.getRole().name());
         }
+
+        // A LÓGICA DO PRIMEIRO LOGIN SERÁ INJETADA NO SERVICE/CONTROLLER.
+        // O Mapper apenas prepara o DTO.
 
         return dto;
     }

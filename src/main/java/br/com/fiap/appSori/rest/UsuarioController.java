@@ -25,27 +25,33 @@ import java.util.stream.Collectors;
 @Tag(name = "Usuários", description = "Endpoints para gerenciar os usuários")
 public class UsuarioController {
 
-    // Mantém o UsuarioService para as operações de consulta e atualização de perfil
     private final UsuarioService usuarioService;
-
-    //  NOVO: Injeta o AuthenticationService para o registro
     private final AuthenticationService authenticationService;
-
     private final UsuarioMapper usuarioMapper;
 
     @PostMapping // Rota de REGISTRO (POST /api/usuarios)
-    @Operation(summary = "Cria um novo usuário", description = "Endpoint para registrar um novo usuário na plataforma.")
+    @Operation(summary = "Cria um novo usuário", description = "Endpoint para registrar um novo usuário na plataforma. Se nomeCompleto for nulo, indica primeiro acesso.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário criado com sucesso."),
             @ApiResponse(responseCode = "400", description = "Requisição inválida.")
     })
     public ResponseEntity<UsuarioResponseDto> criarUsuario(@Valid @RequestBody UsuarioRequestDto requestDTO) {
+
+        // 1. LÓGICA DE DETECÇÃO DE PRIMEIRO ACESSO:
+        // Se o nome completo não foi fornecido na requisição, consideramos que é um registro minimalista (primeiro acesso).
+        boolean isPrimeiroAcesso = requestDTO.getNomeCompleto() == null || requestDTO.getNomeCompleto().trim().isEmpty();
+
         var usuarioDomain = usuarioMapper.toDomain(requestDTO);
 
-        // CORREÇÃO APLICADA: Chama o service que CRIPTOGRAFA a senha
+        // 2. Chama o AuthenticationService para criptografar, salvar e definir o nome padrão (se necessário)
         var usuarioSalvo = authenticationService.registrar(usuarioDomain);
 
+        // 3. Mapeia para o DTO de resposta
         var responseDTO = usuarioMapper.toDto(usuarioSalvo);
+
+        // 4. INJETA A FLAG DE PRIMEIRO ACESSO no DTO de resposta
+        responseDTO.setPrimeiroLogin(isPrimeiroAcesso);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
@@ -88,18 +94,8 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/cpf")
-    @Operation(summary = "Busca um usuário por CPF", description = "Retorna um usuário com base no seu CPF.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usuário encontrado com sucesso."),
-            @ApiResponse(responseCode = "404", description = "Usuário não encontrado.")
-    })
-    public ResponseEntity<UsuarioResponseDto> buscarUsuarioPorCpf(@RequestParam String cpf) {
-        return usuarioService.buscarPorCpf(cpf)
-                .map(usuarioMapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    /* * Rota de busca por CPF removida, pois CPF não está sendo utilizado no escopo atual.
+     */
 
     @GetMapping("/ativos")
     @Operation(summary = "Lista todos os usuários ativos", description = "Retorna uma lista de todos os usuários que estão ativos.")
@@ -114,7 +110,6 @@ public class UsuarioController {
         return ResponseEntity.ok(responseDTOs);
     }
 
-    // NOVO ENDPOINT DE ADMIN: Atualizar Perfil (Role)
     @PutMapping("/{id}/perfil")
     @Operation(summary = "ADMIN: Atualiza o perfil (role) de um usuário específico")
     @ApiResponses(value = {

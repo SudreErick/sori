@@ -41,49 +41,49 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Desabilita CSRF, padrão para API REST stateless
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Define a política de sessão como Stateless
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
                 .authorizeHttpRequests(authorize -> authorize
 
-                        // 1. ROTAS PÚBLICAS (Registro, Login, Documentação)
-
-                        // **CORREÇÃO AQUI**: Libera a rota POST do seu UsuarioController para registro
+                        // 1. ROTAS PÚBLICAS (Login, Registro, Documentação)
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
-
-                        // Rotas de autenticação e login
                         .requestMatchers("/api/auth/**").permitAll()
-
-                        // Swagger/Documentação
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // Rota de Testes (se for o caso)
-                        .requestMatchers(HttpMethod.GET, "/api/testes").permitAll()
+                        // 2. ROTAS DE TESTES (AJUSTADO PARA ABRANGER BUSCA POR ID)
 
-                        // 2. ROTAS DE ADMIN/GESTOR
-                        // Acesso a todos os resultados
-                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasRole("ADMIN")
-                        // Acesso a todas as tentativas
-                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasRole("ADMIN")
-                        // Acesso a todos os check-ins e estatísticas globais
-                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasRole("ADMIN")
-                        // Listar todos os usuários (GET /api/usuarios, diferente do POST de registro)
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasRole("ADMIN")
-                        // Criação de novos modelos de teste, organizações, etc.
+                        // Criação (POST): Apenas ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/testes").hasRole("ADMIN")
+
+                        // Busca e Leitura (GET): Se você quer que TODOS (logados) vejam,
+                        // a configuração 'anyRequest().authenticated()' no final já serve.
+                        // Mas vamos garantir que GESTOR_ORG e ADMIN possam ver (e CLIENTE, se necessário).
+                        // Se o CLIENTE PODE VER, use hasAnyRole. Se apenas ADMIN/GESTOR_ORG podem ver, use as roles específicas.
+                        .requestMatchers(HttpMethod.GET, "/api/testes").hasAnyRole("ADMIN", "GESTOR_ORG", "CLIENTE")
+
+                        // Busca por ID (GET com curinga): Essencial para buscar testes específicos.
+                        .requestMatchers(HttpMethod.GET, "/api/testes/**").hasAnyRole("ADMIN", "GESTOR_ORG", "CLIENTE")
+
+                        // Exclusão (DELETE): Apenas ADMIN
+                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasRole("ADMIN")
+
+                        // 3. ROTAS DE ADMIN/GESTOR
+                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasRole("ADMIN")
+
+                        // Rotas de Organizações
                         .requestMatchers("/api/organizacoes/**").hasAnyRole("ADMIN", "GESTOR_ORG")
+
                         // Atualização de perfil
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasRole("ADMIN")
-                        // 3. Todas as outras rotas exigem autenticação (qualquer ROLE logado).
+
+                        // 4. Todas as outras rotas exigem autenticação (qualquer ROLE logado).
                         .anyRequest().authenticated()
                 )
-                // Adiciona o filtro JWT antes do filtro padrão do Spring Security
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

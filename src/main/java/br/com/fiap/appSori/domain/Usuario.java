@@ -23,8 +23,6 @@ public class Usuario  implements UserDetails {
     private String nomeCompleto;
     private String email;
     private String senha;
-    private String cpf;
-    private String telefone;
     private String cargo;
     private ZonedDateTime criadoEm;
     private ZonedDateTime atualizadoEm;

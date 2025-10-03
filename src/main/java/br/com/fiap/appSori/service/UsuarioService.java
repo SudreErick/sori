@@ -15,14 +15,15 @@ import java.util.Optional;
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
+    // NOTA: Este método 'criarUsuario' é usado apenas como um helper de persistência.
+    // O registro real com criptografia deve ocorrer no AuthenticationService.
     public Usuario criarUsuario(Usuario usuario) {
         // Normaliza o e-mail para minúsculas antes de salvar
         usuario.setEmail(usuario.getEmail().toLowerCase());
         usuario.setCriadoEm(ZonedDateTime.now());
         usuario.setAtualizadoEm(ZonedDateTime.now());
         usuario.setAtivo(true);
-        // NOTA: A definição da Role padrão (CLIENTE) deve ser feita no AuthenticationService
-        // ou no construtor do domínio Usuario, mas não precisa ser repetida aqui se já estiver lá.
+        // O construtor de Usuario ou o AuthenticationService deve garantir a ROLE padrão.
         return usuarioRepository.save(usuario);
     }
 
@@ -39,15 +40,10 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(email.toLowerCase());
     }
 
-    public Optional<Usuario> buscarPorCpf(String cpf) {
-        return usuarioRepository.findByCpf(cpf);
-    }
-
     public List<Usuario> buscarAtivos() {
         return usuarioRepository.findByAtivoTrue();
     }
 
-    // ⭐️ NOVO MÉTODO: Gerenciamento de Perfil por Administrador
     /**
      * ADMIN: Atualiza o perfil (Role) de um usuário específico.
      * @param usuarioId O ID do usuário a ser modificado.
@@ -72,7 +68,6 @@ public class UsuarioService {
      */
     public void deletarUsuario(String id) {
         if (!usuarioRepository.existsById(id)) {
-            // Usa a exceção que você já tem ou cria uma específica
             throw new RuntimeException("Usuário não encontrado.");
         }
         usuarioRepository.deleteById(id);
