@@ -1,3 +1,4 @@
+// main\java\br\com\fiap\appSori\config\SecurityConfig.java
 package br.com.fiap.appSori.config;
 
 import br.com.fiap.appSori.config.security.filter.SecurityFilter;
@@ -52,30 +53,31 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // 2. ROTAS DE TESTES (TODAS CORRIGIDAS PARA hasAuthority)
+                        // 2. ROTAS DE TESTES (ORDEM AJUSTADA E USO DE hasAuthority)
 
-                        // Rota ADMIN: Busca todos os testes (incluindo rascunhos, inativos, etc.)
-                        .requestMatchers(HttpMethod.GET, "/api/testes/admin/todos").hasAuthority("ADMIN")
+                        // Rota mais específica primeiro
+                        .requestMatchers(HttpMethod.GET, "/api/testes/admin/todos").hasAuthority("ROLE_ADMIN")
 
-                        // Criação (POST): Apenas ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/testes").hasAuthority("ADMIN")
+                        // Rotas de criação e exclusão (Apenas ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/testes").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasAuthority("ROLE_ADMIN")
 
-                        // Exclusão (DELETE): Apenas ADMIN
-                        .requestMatchers(HttpMethod.DELETE, "/api/testes/**").hasAuthority("ADMIN")
-
-                        // Busca e Leitura (GET): Rotas de usuário (lista, por ID, disponíveis, realizados)
-                        // Todos os logados podem acessar estas rotas:
-                        .requestMatchers(HttpMethod.GET, "/api/testes/**").hasAnyAuthority("ADMIN", "GESTOR_ORG", "CLIENTE")
+                        // Rotas de leitura para usuários autenticados (Regra mais genérica por último)
+                        .requestMatchers(HttpMethod.GET, "/api/testes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR_ORG", "ROLE_CLIENTE")
 
 
-                        // 3. ROTAS DE ADMIN/GESTOR (CORRIGIDAS PARA hasAuthority)
-                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasAuthority("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAuthority("ADMIN")
+                        // 3. ROTAS DE ADMIN/GESTOR
+                        .requestMatchers(HttpMethod.GET, "/api/resultados/global").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tentativas/global").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/checkins/global").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasAuthority("ROLE_ADMIN")
+
 
                         // Rotas de Organizações
-                        .requestMatchers("/api/organizacoes/**").hasAnyAuthority("ADMIN", "GESTOR_ORG")
+                        .requestMatchers("/api/organizacoes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR_ORG")
+                        .requestMatchers("/api/relacionamentos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_GESTOR_ORG")
+
 
                         // Atualização de perfil
                         .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}/perfil").authenticated()
